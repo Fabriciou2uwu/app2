@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OiTube Music</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: { brand: { 500: '#ef4444', 600: '#dc2626' } }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-zinc-950 text-zinc-100 font-sans flex flex-col h-screen overflow-hidden">
+
+    <!-- Header / Barra de Pesquisa -->
+    <header class="h-16 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between px-4 z-20 shrink-0">
+        <div class="flex items-center space-x-3">
+            <div class="bg-brand-600 text-white p-2 rounded-xl flex items-center justify-center shadow-lg shadow-red-600/20">
+                <i class="fa-solid fa-play text-lg"></i>
+            </div>
+            <h1 class="text-xl font-bold tracking-wide">OiTube <span class="text-brand-500">Music</span></h1>
+        </div>
+        
+        <div class="flex-1 max-w-xl mx-4">
+            <div class="relative">
+                <input type="text" id="searchInput" placeholder="Pesquisar música ou artista..." 
+                    class="w-full bg-zinc-800 text-sm text-zinc-200 pl-4 pr-10 py-2.5 rounded-full border border-zinc-700 focus:outline-none focus:border-brand-500 transition"
+                    onkeypress="if(event.key === 'Enter') buscarMusicas()">
+                <button onclick="buscarMusicas()" class="absolute right-3 top-2.5 text-zinc-400 hover:text-brand-500">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Corpo Principal com Menu Lateral Fixo -->
+    <div class="flex flex-1 overflow-hidden">
+        
+        <!-- Menu Lateral (Sidebar) -->
+        <aside class="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col justify-between shrink-0">
+            <nav class="p-4 space-y-2">
+                <div class="text-xs font-semibold text-zinc-500 uppercase px-4 pb-1">Navegação</div>
+                <button onclick="mudarAba('home')" id="menu-home" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-white bg-zinc-800 transition shadow-sm">
+                    <i class="fa-solid fa-house w-5 text-brand-500"></i>
+                    <span class="font-medium text-sm">Explorar</span>
+                </button>
+                
+                <div class="text-xs font-semibold text-zinc-500 uppercase px-4 pt-4 pb-1">Sua Biblioteca</div>
+                <button onclick="mudarAba('playlists')" id="menu-playlists" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-zinc-300 hover:bg-zinc-800/60 hover:text-white transition">
+                    <i class="fa-solid fa-list-music w-5 text-brand-500"></i>
+                    <span class="font-medium text-sm">Minhas Playlists</span>
+                </button>
+                <button onclick="mudarAba('downloads')" id="menu-downloads" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-zinc-300 hover:bg-zinc-800/60 hover:text-white transition">
+                    <i class="fa-solid fa-download w-5 text-brand-500"></i>
+                    <span class="font-medium text-sm">Músicas Salvas (Offline)</span>
+                </button>
+            </nav>
+            <div class="p-4 border-t border-zinc-800/60 text-xs text-zinc-500 text-center">
+                OiTube Music v3.7
+            </div>
+        </aside>
+
+        <!-- Conteúdo Dinâmico -->
+        <main id="mainContent" class="flex-1 overflow-y-auto p-4 md:p-6 pb-32 bg-zinc-950">
+            
+            <!-- ABA EXPLORAR / BUSCA -->
+            <div id="tab-home" class="space-y-6">
+                <div>
+                    <h2 class="text-2xl font-bold mb-1">Músicas em Destaque</h2>
+                    <p class="text-sm text-zinc-400">Pesquise para ouvir online instantaneamente ou salvar em MP3 no app.</p>
+                </div>
+                
+                <div id="searchResults" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col justify-between">
+                        <div>
+                            <div class="aspect-square bg-zinc-800 rounded-xl mb-3 flex items-center justify-center text-zinc-600">
+                                <i class="fa-solid fa-music text-3xl"></i>
+                            </div>
+                            <h3 class="font-semibold text-sm text-zinc-200">Comece a buscar</h3>
+                            <p class="text-xs text-zinc-400 mt-1">Digite o nome da música no topo e aperte Enter.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA PLAYLISTS -->
+            <div id="tab-playlists" class="space-y-6 hidden">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-bold">Minhas Playlists</h2>
+                        <p class="text-sm text-zinc-400">Suas listas de reprodução personalizadas.</p>
+                    </div>
+                    <button onclick="criarPlaylist()" class="bg-brand-600 hover:bg-brand-500 text-white text-sm px-4 py-2 rounded-xl font-medium transition shadow-lg shadow-red-600/20">
+                        <i class="fa-solid fa-plus mr-1"></i> Nova Playlist
+                    </button>
+                </div>
+                <div id="playlistsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <p class="text-sm text-zinc-500">Nenhuma playlist criada ainda.</p>
+                </div>
+            </div>
+
+            <!-- ABA DOWNLOADS / OFFLINE -->
+            <div id="tab-downloads" class="space-y-6 hidden">
+                <div>
+                    <h2 class="text-2xl font-bold">Músicas Salvas (Offline)</h2>
+                    <p class="text-sm text-zinc-400">Baixadas diretamente em MP3 para a memória interna do app.</p>
+                </div>
+                <div id="offlineContainer" class="space-y-3">
+                    <p class="text-sm text-zinc-500">Nenhuma música salva no app ainda.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Player Fixo Inferior -->
+    <footer class="fixed bottom-0 left-0 right-0 h-24 bg-zinc-900 border-t border-zinc-800 px-4 flex items-center justify-between z-30">
+        <div class="flex items-center space-x-3 w-1/3">
+            <div class="w-12 h-12 bg-zinc-800 rounded-lg flex items-center justify-center text-zinc-500 overflow-hidden shrink-0" id="playerThumbContainer">
+                <i class="fa-solid fa-music"></i>
+            </div>
+            <div class="min-w-0">
+                <h4 id="playerTitle" class="text-sm font-semibold truncate text-zinc-200">Selecione uma música</h4>
+                <p id="playerArtist" class="text-xs text-zinc-400 truncate">OiTube Player</p>
+            </div>
+        </div>
+
+        <!-- Controles de Mídia -->
+        <div class="flex flex-col items-center space-y-2 w-1/3">
+            <div class="flex items-center space-x-4">
+                <button onclick="alternarPlayPause()" id="btnPlayPause" class="w-10 h-10 bg-white text-zinc-950 rounded-full flex items-center justify-center shadow-md hover:scale-105 transition">
+                    <i class="fa-solid fa-play"></i>
+                </button>
+            </div>
+            <span id="playerStatusText" class="text-xs text-zinc-500">Pronto para tocar</span>
+        </div>
+
+        <div class="w-1/3 flex justify-end items-center">
+            <!-- Player de Áudio Visível para depuração e execução direta -->
+            <audio id="audioPlayer" controls class="h-10 accent-red-500" onplay="atualizarEstadoPlay(true)" onpause="atualizarEstadoPlay(false)" onended="atualizarEstadoPlay(false)"></audio>
+        </div>
+    </footer>
+
+    <!-- Script JavaScript -->
+    <script>
+        const servidorNuvemUrl = 'https://app-1-2k2e.onrender.com';
+        const audioPlayer = document.getElementById('audioPlayer');
+        let isPlaying = false;
+
+        let db;
+        const request = indexedDB.open('OiTubeMusicDB', 3);
+
+        request.onerror = () => console.error("Erro ao abrir banco de dados.");
+        request.onsuccess = (event) => { 
+            db = event.target.result; 
+            carregarMusicasSalvas(); 
+            carregarPlaylists(); 
+        };
+        request.onupgradeneeded = (event) => {
+            let database = event.target.result;
+            if (!database.objectStoreNames.contains('songs')) database.createObjectStore('songs', { keyPath: 'id' });
+            if (!database.objectStoreNames.contains('playlists')) database.createObjectStore('playlists', { keyPath: 'name' });
+        };
+
+        async function buscarMusicas() {
+            const query = document.getElementById('searchInput').value;
+            if (!query) return;
+
+            const resultsContainer = document.getElementById('searchResults');
+            resultsContainer.innerHTML = '<p class="text-sm text-zinc-400 col-span-full py-6 text-center"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Buscando músicas...</p>';
+
+            try {
+                const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=16`);
+                const data = await res.json();
+                const items = data.results || [];
+
+                resultsContainer.innerHTML = '';
+
+                if (items.length === 0) {
+                    resultsContainer.innerHTML = '<p class="text-sm text-zinc-400 col-span-full text-center">Nenhum resultado encontrado.</p>';
+                    return;
+                }
+
+                items.forEach(item => {
+                    const title = item.trackName;
+                    const artist = item.artistName;
+                    const thumb = item.artworkUrl100 ? item.artworkUrl100.replace('100x100bb', '300x300bb') : '';
+                    const previewUrl = item.previewUrl;
+                    const searchQuery = `${artist} - ${title}`;
+                    const uniqueId = searchQuery.replace(/[^a-zA-Z0-9]/g, '_');
+
+                    resultsContainer.innerHTML += `
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col justify-between hover:border-zinc-700 transition">
+                            <div>
+                                <div class="aspect-square bg-zinc-800 rounded-xl mb-3 overflow-hidden relative group">
+                                    <img src="${thumb}" class="w-full h-full object-cover">
+                                    <button onclick="tocarOnline('${previewUrl}', '${title.replace(/'/g, "")}', '${artist.replace(/'/g, "")}', '${thumb}')" class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white text-3xl">
+                                        <i class="fa-solid fa-circle-play text-brand-500"></i>
+                                    </button>
+                                </div>
+                                <h3 class="font-semibold text-sm line-clamp-1 text-zinc-200">${title}</h3>
+                                <p class="text-xs text-zinc-400 mt-1">${artist}</p>
+                            </div>
+                            <div class="flex items-center space-x-2 mt-4 pt-3 border-t border-zinc-800">
+                                <button onclick="tocarOnline('${previewUrl}', '${title.replace(/'/g, "")}', '${artist.replace(/'/g, "")}', '${thumb}')" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-xs py-2 rounded-lg font-medium transition flex items-center justify-center">
+                                    <i class="fa-solid fa-play text-brand-500 mr-1.5"></i> Ouvir
+                                </button>
+                                <button onclick="baixarESalvarNoApp('${uniqueId}', '${title.replace(/'/g, "")}', '${artist.replace(/'/g, "")}', '${searchQuery}', '${thumb}')" id="btn-${uniqueId}" class="bg-zinc-800 hover:bg-brand-600 hover:text-white text-xs px-3 py-2 rounded-lg transition" title="Salvar MP3 Offline">
+                                    <i class="fa-solid fa-download"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                resultsContainer.innerHTML = '<p class="text-sm text-red-400 col-span-full text-center">Erro ao buscar faixas.</p>';
+            }
+        }
+
+        function tocarOnline(previewUrl, title, artist, thumb) {
+            if (!previewUrl) {
+                alert("Prévia online indisponível para esta faixa. Você pode salvá-la em MP3!");
+                return;
+            }
+            audioPlayer.src = previewUrl;
+            audioPlayer.play().catch(e => console.log("Erro ao reproduzir preview:", e));
+            document.getElementById('playerTitle').innerText = title;
+            document.getElementById('playerArtist').innerText = artist;
+            document.getElementById('playerStatusText').innerText = 'Reproduzindo Online';
+            document.getElementById('playerThumbContainer').innerHTML = `<img src="${thumb}" class="w-full h-full object-cover">`;
+        }
+
+        function alternarPlayPause() {
+            if (audioPlayer.paused) {
+                audioPlayer.play().catch(e => console.log(e));
+            } else {
+                audioPlayer.pause();
+            }
+        }
+
+        function atualizarEstadoPlay(tocando) {
+            isPlaying = tocando;
+            document.getElementById('btnPlayPause').innerHTML = tocando ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
+            document.getElementById('playerStatusText').innerText = tocando ? 'Reproduzindo' : 'Pausado';
+        }
+
+        async function baixarESalvarNoApp(id, title, artist, query, thumb) {
+            const btn = document.getElementById(`btn-${id}`);
+            if (btn) {
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                btn.disabled = true;
+            }
+
+            try {
+                const response = await fetch(`${servidorNuvemUrl}/download-mp3?q=${encodeURIComponent(query)}`);
+                if (!response.ok) throw new Error('Falha');
+
+                const blob = await response.blob();
+                const audioBlob = new Blob([blob], { type: 'audio/mpeg' });
+
+                const transaction = db.transaction(['songs'], 'readwrite');
+                const store = transaction.objectStore('songs');
+                store.put({ id: id, title: title, artist: artist, blob: audioBlob, thumb: thumb });
+
+                transaction.oncomplete = () => {
+                    if (btn) btn.innerHTML = '<i class="fa-solid fa-check text-emerald-500"></i>';
+                    carregarMusicasSalvas();
+                };
+            } catch (err) {
+                if (btn) {
+                    btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-red-500"></i>';
+                    btn.disabled = false;
+                }
+            }
+        }
+
+        function carregarMusicasSalvas() {
+            if (!db) return;
+            const container = document.getElementById('offlineContainer');
+            const transaction = db.transaction(['songs'], 'readonly');
+            const store = transaction.objectStore('songs');
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+                const songs = request.result;
+                if (songs.length === 0) {
+                    container.innerHTML = '<p class="text-sm text-zinc-500">Nenhuma música salva no app ainda.</p>';
+                    return;
+                }
+
+                container.innerHTML = songs.map(song => `
+                    <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-zinc-800 rounded-lg overflow-hidden shrink-0">
+                                <img src="${song.thumb || ''}" class="w-full h-full object-cover">
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-sm text-zinc-200">${song.title}</h4>
+                                <p class="text-xs text-zinc-400">${song.artist}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="tocarMusicaSalva('${song.id}')" class="bg-zinc-800 hover:bg-brand-600 text-white text-xs px-4 py-2 rounded-lg transition">
+                                <i class="fa-solid fa-play mr-1 text-brand-500"></i> Ouvir
+                            </button>
+                            <button onclick="removerMusicaSalva('${song.id}')" class="bg-zinc-800 hover:bg-red-600 text-zinc-400 hover:text-white text-xs px-3 py-2 rounded-lg transition" title="Excluir">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            };
+        }
+
+        function tocarMusicaSalva(id) {
+            const transaction = db.transaction(['songs'], 'readonly');
+            const store = transaction.objectStore('songs');
+            const request = store.get(id);
+
+            request.onsuccess = () => {
+                const song = request.result;
+                if (song && song.blob) {
+                    audioPlayer.pause();
+                    const audioUrl = URL.createObjectURL(song.blob);
+                    
+                    audioPlayer.src = audioUrl;
+                    audioPlayer.load();
+
+                    audioPlayer.play().then(() => {
+                        document.getElementById('playerTitle').innerText = song.title;
+                        document.getElementById('playerArtist').innerText = song.artist;
+                        document.getElementById('playerStatusText').innerText = 'Reproduzindo (Offline)';
+                        document.getElementById('playerThumbContainer').innerHTML = `<img src="${song.thumb || ''}" class="w-full h-full object-cover">`;
+                    }).catch(error => {
+                        console.error("Erro ao reproduzir áudio local:", error);
+                    });
+                }
+            };
+        }
+
+        function removerMusicaSalva(id) {
+            const transaction = db.transaction(['songs'], 'readwrite');
+            const store = transaction.objectStore('songs');
+            store.delete(id);
+            transaction.oncomplete = () => carregarMusicasSalvas();
+        }
+
+        function criarPlaylist() {
+            const nome = prompt("Nome da nova playlist:");
+            if (!nome) return;
+            const transaction = db.transaction(['playlists'], 'readwrite');
+            const store = transaction.objectStore('playlists');
+            store.put({ name: nome, items: [] });
+            transaction.oncomplete = () => carregarPlaylists();
+        }
+
+        function carregarPlaylists() {
+            if (!db) return;
+            const container = document.getElementById('playlistsContainer');
+            const transaction = db.transaction(['playlists'], 'readonly');
+            const store = transaction.objectStore('playlists');
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+                const playlists = request.result;
+                if (playlists.length === 0) {
+                    container.innerHTML = '<p class="text-sm text-zinc-500">Nenhuma playlist criada ainda.</p>';
+                    return;
+                }
+                container.innerHTML = playlists.map(pl => `
+                    <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-bold text-base mb-1 text-zinc-100">${pl.name}</h3>
+                            <p class="text-xs text-zinc-400">${pl.items.length} músicas adicionadas</p>
+                        </div>
+                        <button onclick="alert('Playlist pronta para uso!')" class="mt-4 bg-zinc-800 hover:bg-zinc-700 text-xs py-2 rounded-lg transition">Ver Playlist</button>
+                    </div>
+                `).join('');
+            };
+        }
+
+        function mudarAba(aba) {
+            document.getElementById('tab-home').classList.add('hidden');
+            document.getElementById('tab-playlists').classList.add('hidden');
+            document.getElementById('tab-downloads').classList.add('hidden');
+            document.getElementById(`tab-${aba}`).classList.remove('hidden');
+
+            ['home', 'playlists', 'downloads'].forEach(item => {
+                const btn = document.getElementById(`menu-${item}`);
+                if (item === aba) {
+                    btn.className = "w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-white bg-zinc-800 transition shadow-sm";
+                } else {
+                    btn.className = "w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-zinc-300 hover:bg-zinc-800/60 hover:text-white transition";
+                }
+            });
+
+            if (aba === 'downloads') carregarMusicasSalvas();
+            if (aba === 'playlists') carregarPlaylists();
+        }
+    </script>
+</body>
+</html>
